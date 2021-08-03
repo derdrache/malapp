@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:filepicker_windows/filepicker_windows.dart';
 
 import '../assets/IconEraser.dart';
 import 'painters.dart';
@@ -145,21 +148,59 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
   }
 
   _savePicture(pngBytes, name) async{
-    final file = await _localFile(name);
+    final file = await _combinePathAndFilename(name);
     var data = await pngBytes;
 
     file.writeAsBytesSync(data.buffer.asInt8List());
   }
 
-  Future<String> get _localPath async {
+  Future<String> get _windowsPath async {
     final directory = await getApplicationDocumentsDirectory();
 
     return directory.path;
   }
 
-  Future<File> _localFile(name) async {
-    final path = await _localPath;
+  Future<File> _combinePathAndFilename(name) async {
+    var path;
+
+    if (Platform.isAndroid){
+      path = await checkAndroidPermissionAndGetPath();
+    } else if(Platform.isWindows){
+      path = await _windowsPath;
+    }
+    //print(path);
     return File('$path/$name.png');
+  }
+
+  checkAndroidPermissionAndGetPath() async {
+    var path = "/storage/emulated/0/Download";
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      await Permission.storage.request();
+    }
+    return path;
+  }
+
+  _openGalerie() async {
+    if(Platform.isAndroid){
+      FilePickerResult? myFile = await FilePicker.platform.pickFiles();
+      var test = myFile!.paths[0];
+    } else if(Platform.isWindows){
+      final file = OpenFilePicker()
+        ..filterSpecification = {
+          'Bilddatein (*.png)': '*.png',
+        }
+        ..defaultFilterIndex = 0
+        ..defaultExtension = 'doc'
+        ..title = 'Select a document';
+
+      final result = file.getFile();
+      if (result != null) {
+        print(result.path);
+      }
+    }
+
+
   }
 
 
@@ -218,7 +259,7 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
         children: <Widget>[
           actionButton(Icon(Icons.undo), () {}),
           SizedBox(height: buttonPadding),
-          actionButton(Icon(Icons.collections), () {}),
+          actionButton(Icon(Icons.collections), () => _openGalerie()),
           SizedBox(height: buttonPadding),
           actionButton(Icon(Icons.save), ()=> _saveCanvas(Size(screenWidth, screenHeight))),
           SizedBox(height: buttonPadding),

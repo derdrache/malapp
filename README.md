@@ -1,7 +1,7 @@
 # malapp_kinder
 
 to do:
-- speichern Android / IOS erlaubnisabfrage?
+- öffnen Windows
 - bildname bestimmen
 
 - Clean code
@@ -15,5 +15,6 @@ to do:
     - menu beim zeichnen schließen
     - stift dicke auswahl
 - App Symbol einfügen
+- speichern und öffnen => IOS / Linux
 - mauscursor anpassen? schwer
 - laggt ab und zu?
