@@ -15,14 +15,11 @@ class CanvasPage extends StatefulWidget {
   State<CanvasPage> createState() => _CanvasPageState();
 }
 
-class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
+class _CanvasPageState extends State<CanvasPage>{
   bool mainMenuActive = false;
   bool newCanvasMenuActive = false;
   bool eraserActive = false;
   double buttonPadding = 9.0;
-  double buttonSize = 50;
-  double buttonBorder = 25;
-  int desktopWidth = 1000;
   var points = _OffsetList(
       offsets: [],
       color: Colors.black,
@@ -38,17 +35,6 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
     penList = [points];
   }
 
-  _setMenuButtonSize(screenSize){
-    if (screenSize < desktopWidth){
-      setState(() {
-        buttonSize = 35;
-        buttonBorder = 20;
-      });
-    } else{
-      buttonSize = 50;
-      buttonBorder = 25;
-    }
-  }
 
   createNewCanvas(color) {
     setState(() {
@@ -92,7 +78,7 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
 
   }
 
-  _pointInRange(Offset position, drawPoint){
+  _checkPointInRange(Offset position, drawPoint){
     var range = points.strokeWidth ;
     if ((position.dx>= drawPoint.dx - range && position.dx <= drawPoint.dx + range) &&
         position.dy>= drawPoint.dy - range && position.dy <= drawPoint.dy + range){
@@ -107,7 +93,7 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
       for(var i = 0; i<penList.length; i++){
         for(var j = 0; j<penList[i].offsets.length;j++){
           var drawPoint = penList[i].offsets[j];
-          if (_pointInRange(position,drawPoint)){
+          if (_checkPointInRange(position,drawPoint)){
             penList[i].offsets[j] =Offset.zero;
           }
         }
@@ -124,7 +110,7 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
 
     Picture backgroundPicture = _backgroundPicture(size);
 
-    var drawingPngBytes = _drawing(size, backgroundPicture);
+    var drawingPngBytes = _combineDrawingWithBackgroundInPNG(size, backgroundPicture);
 
     _savePicture(drawingPngBytes, basicName + timeStampFormatted);
 
@@ -135,13 +121,11 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
     final PictureRecorder recorder = PictureRecorder();
     backgroundPainter.paint(Canvas(recorder), size);
     final Picture picture = recorder.endRecording();
-    //final img = await picture.toImage(size.width.round(),size.height.round());
 
-    //welches Format benötigt _drawing?
     return picture;
   }
 
-  _drawing(size, backgroundPicture) async {
+  _combineDrawingWithBackgroundInPNG(size, backgroundPicture) async {
     var penPainter = PenPainter(points, penList, backgroundPicture);
     final PictureRecorder recorder = PictureRecorder();
     penPainter.paint(Canvas(recorder), size);
@@ -201,7 +185,6 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
-    _setMenuButtonSize(screenWidth);
 
     return Scaffold(
       body: Center(
@@ -225,22 +208,12 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
               )
           )
       ),
-      floatingActionButton: mainMenuActive ? mainMenu() :
-                            Container(
-                                height: buttonSize,
-                                width: buttonSize,
-                                child: FittedBox(
-                                    child:FloatingActionButton(
-                                      mini: true,
-                                      child: Icon(Icons.menu),
-                                      onPressed: () {
-                                        setState(() {
-                                          mainMenuActive= true;
-                                        });
-                                      },
-                                    )
-                                )
-                            )
+      floatingActionButton: mainMenuActive ? mainMenu() : MenuButton(
+        icon:Icon(Icons.menu),
+        onPressed: () => setState(() { mainMenuActive= true; }),
+        canvasColor: canvasColor,
+        screenWidth: screenWidth,
+      )
     );
   }
 
@@ -252,19 +225,22 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
           MenuButton(
               icon:Icon(Icons.undo),
               onPressed: () {},
-              //canvasColor: canvasColor
+              canvasColor: canvasColor,
+              screenWidth: screenWidth,
               ),
           SizedBox(height: buttonPadding),
           MenuButton(
               icon:Icon(Icons.collections),
               onPressed: () => _openGalerie(),
-              canvasColor: canvasColor
+              canvasColor: canvasColor,
+              screenWidth: screenWidth,
           ),
           SizedBox(height: buttonPadding),
           MenuButton(
             icon:Icon(Icons.save),
             onPressed:()=> _saveCanvas(Size(screenWidth, screenHeight)),
             canvasColor: canvasColor,
+            screenWidth: screenWidth,
           ),
           SizedBox(height: buttonPadding),
           newCanvasMenu(),
@@ -277,6 +253,7 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
                 icon:Icon(eraserActive?Icons.brush: OwnIcons.eraser),
                 onPressed: () => eraserOnOff(),
                 canvasColor: canvasColor,
+                screenWidth: screenWidth,
               )
             ]
           ),
@@ -285,22 +262,15 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               colorSelectionMenu(),
-              Container(
-                  height: buttonSize,
-                  width: buttonSize,
-                  child: FittedBox(
-                      child:FloatingActionButton(
-                        mini: true,
-                        child: Icon(Icons.menu_open),
-                        onPressed: () {
-                            setState(() {
-                              newCanvasMenuActive = false;
-                              mainMenuActive= false;
-                            });
-                        },
-                      )
-                  )
-              ),
+              MenuButton(
+                icon: Icon(Icons.menu_open),
+                canvasColor: canvasColor,
+                onPressed: () => setState(() {
+                  newCanvasMenuActive = false;
+                  mainMenuActive= false;
+                }),
+                screenWidth: screenWidth,
+              )
             ],
           )
         ]
@@ -327,9 +297,11 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
           MenuButton(
             color: colorList[i],
             onPressed: () =>createNewCanvas(colorList[i]),
-            canvasColor: canvasColor
+            canvasColor: canvasColor,
+            screenWidth: screenWidth,
           )
         );
+
         canvasMenu.add(
             SizedBox(width: buttonPadding)
         );
@@ -340,7 +312,8 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
         MenuButton(
             icon:Icon(Icons.note_add),
             onPressed: () => _openMenu(),
-            canvasColor: canvasColor
+            canvasColor: canvasColor,
+            screenWidth: screenWidth,
         )
     );
 
@@ -348,28 +321,6 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
       mainAxisAlignment: MainAxisAlignment.end,
       children: canvasMenu,
 
-    );
-  }
-
-  Widget newCanvasButton(color){
-    return Container(
-        height: buttonSize,
-        width: buttonSize,
-        decoration: BoxDecoration(
-            border: Border.all(
-              width: 1,
-              color: canvasColor == Colors.black? Colors.white : Colors.black
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(buttonBorder))
-        ),
-        child: FittedBox(
-            child:FloatingActionButton(
-              backgroundColor: color,
-              onPressed: (){
-                createNewCanvas(color);
-              }
-            )
-        )
     );
   }
 
@@ -396,6 +347,7 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
             onPressed: () => _changePenColor(colorList[i]),
             canvasColor: canvasColor,
             active: points.color == colorList[i],
+            screenWidth: screenWidth,
           )
       );
       colorMenu.add(SizedBox(width: buttonPadding));
@@ -411,7 +363,10 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
     List widthList = [];
 
 
+
     setWidth(){
+      int desktopWidth = 1000;
+
       if (screenSize > desktopWidth) {
         widthList = [2.5,5.0,10.0,20.0,30.0,40.0,50.0];
       } else{
@@ -435,6 +390,7 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
                 onPressed: () => _changePenWidth(widthList[i]),
                 canvasColor: canvasColor,
                 active: points.strokeWidth == widthList[i],
+                screenWidth: screenWidth,
             )
         );
         penWidthMenu.add(
@@ -444,10 +400,9 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
       }
     }
 
+
     setWidth();
-
     createMenu();
-
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -468,18 +423,33 @@ class _OffsetList {
 }
 
 class MenuButton extends StatelessWidget{
-  MenuButton({this.icon, this.color, this.onPressed, this.canvasColor, this.active=false});
+  MenuButton({this.icon, this.color, this.onPressed, this.canvasColor,
+              this.active=false, this.screenWidth});
 
   var icon;
   var onPressed;
   var canvasColor;
   var color;
   var active;
+  var screenWidth;
+  int desktopWidth = 1000;
   double buttonSize = 50;
   double buttonBorder = 25;
 
+  _setMenuButtonSize(screenWidth){
+    if (screenWidth < desktopWidth){
+      buttonSize = 35;
+      buttonBorder = 20;
+    } else{
+      buttonSize = 50;
+      buttonBorder = 25;
+    }
+  }
+
 
   Widget build(BuildContext context) {
+    _setMenuButtonSize(screenWidth);
+
     return Container(
         height: buttonSize,
         width: buttonSize,
