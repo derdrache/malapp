@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:filepicker_windows/filepicker_windows.dart';
+import 'package:intl/intl.dart';
 
 import '../assets/IconEraser.dart';
 import 'painters.dart';
@@ -116,12 +115,17 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
   }
 
   _saveCanvas(size) async {
+    var basicName = "gemalt";
+    var timeStamp = DateTime.now();
+    var formatter = DateFormat('yyyyMMdd_HHmm');
+    String timeStampFormatted = formatter.format(timeStamp);
+
 
     Picture backgroundPicture = _backgroundPicture(size);
 
     var drawingPngBytes = _drawing(size, backgroundPicture);
 
-    _savePicture(drawingPngBytes, "test");
+    _savePicture(drawingPngBytes, basicName + timeStampFormatted);
 
   }
 
@@ -182,26 +186,10 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
   }
 
   _openGalerie() async {
-    if(Platform.isAndroid){
-      FilePickerResult? myFile = await FilePicker.platform.pickFiles();
-      var test = myFile!.paths[0];
-    } else if(Platform.isWindows){
-      final file = OpenFilePicker()
-        ..filterSpecification = {
-          'Bilddatein (*.png)': '*.png',
-        }
-        ..defaultFilterIndex = 0
-        ..defaultExtension = 'doc'
-        ..title = 'Select a document';
-
-      final result = file.getFile();
-      if (result != null) {
-        print(result.path);
-      }
-    }
-
 
   }
+
+
 
 
   @override

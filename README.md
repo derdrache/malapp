@@ -1,7 +1,6 @@
 # malapp_kinder
 
 to do:
-- öffnen Windows
 - bildname bestimmen
 
 - Clean code
