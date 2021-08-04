@@ -1,8 +1,6 @@
 # malapp_kinder
 
 to do:
-- bildname bestimmen
-
 - Clean code
 
 - Bilder Galarie => Bild aussuchen

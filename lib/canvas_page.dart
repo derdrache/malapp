@@ -10,24 +10,12 @@ import 'painters.dart';
 
 
 
-var points = _OffsetList(
-    offsets: [],
-    color: Colors.black,
-    strokeWidth: 10.0
-);
-var penList = [points];
-Color canvasColor = Colors.white;
-var screenWidth;
-var screenHeight;
-
-
 class CanvasPage extends StatefulWidget {
   @override
   State<CanvasPage> createState() => _CanvasPageState();
 }
 
 class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
-
   bool mainMenuActive = false;
   bool newCanvasMenuActive = false;
   bool eraserActive = false;
@@ -35,7 +23,20 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
   double buttonSize = 50;
   double buttonBorder = 25;
   int desktopWidth = 1000;
+  var points = _OffsetList(
+      offsets: [],
+      color: Colors.black,
+      strokeWidth: 10.0
+  );
+  var penList = [];
+  Color canvasColor = Colors.white;
+  var screenWidth;
+  var screenHeight;
 
+  void initState(){
+    super.initState();
+    penList = [points];
+  }
 
   _setMenuButtonSize(screenSize){
     if (screenSize < desktopWidth){
@@ -189,12 +190,15 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
 
   }
 
-
+  eraserOnOff(){
+    setState(() {
+      eraserActive? eraserActive = false : eraserActive = true;
+    });
+  }
 
 
   @override
   Widget build(BuildContext context) {
-
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
     _setMenuButtonSize(screenWidth);
@@ -245,15 +249,37 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: <Widget>[
-          actionButton(Icon(Icons.undo), () {}),
+          MenuButton(
+              icon:Icon(Icons.undo),
+              onPressed: () {},
+              //canvasColor: canvasColor
+              ),
           SizedBox(height: buttonPadding),
-          actionButton(Icon(Icons.collections), () => _openGalerie()),
+          MenuButton(
+              icon:Icon(Icons.collections),
+              onPressed: () => _openGalerie(),
+              canvasColor: canvasColor
+          ),
           SizedBox(height: buttonPadding),
-          actionButton(Icon(Icons.save), ()=> _saveCanvas(Size(screenWidth, screenHeight))),
+          MenuButton(
+            icon:Icon(Icons.save),
+            onPressed:()=> _saveCanvas(Size(screenWidth, screenHeight)),
+            canvasColor: canvasColor,
+          ),
           SizedBox(height: buttonPadding),
           newCanvasMenu(),
           SizedBox(height: buttonPadding),
-          penWidthMenu(screenWidth),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children:[
+              penWidthMenu(screenWidth),
+              MenuButton(
+                icon:Icon(eraserActive?Icons.brush: OwnIcons.eraser),
+                onPressed: () => eraserOnOff(),
+                canvasColor: canvasColor,
+              )
+            ]
+          ),
           SizedBox(height: buttonPadding),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -297,12 +323,26 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
 
     if(newCanvasMenuActive){
       for(var i=0; i < colorList.length;i++){
-        canvasMenu.add(newCanvasButton(colorList[i]));
-        canvasMenu.add(SizedBox(width: buttonPadding));
+        canvasMenu.add(
+          MenuButton(
+            color: colorList[i],
+            onPressed: () =>createNewCanvas(colorList[i]),
+            canvasColor: canvasColor
+          )
+        );
+        canvasMenu.add(
+            SizedBox(width: buttonPadding)
+        );
       }
     }
 
-    canvasMenu.add(actionButton(Icon(Icons.note_add),() => _openMenu()));
+    canvasMenu.add(
+        MenuButton(
+            icon:Icon(Icons.note_add),
+            onPressed: () => _openMenu(),
+            canvasColor: canvasColor
+        )
+    );
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -333,18 +373,6 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget actionButton(icon, onPressed) {
-      return Container(
-          height: buttonSize,
-          width: buttonSize,
-          child: FittedBox(
-              child: FloatingActionButton(
-                  mini: true, child: icon, onPressed: onPressed
-              )
-          )
-      );
-  }
-
   Widget colorSelectionMenu(){
     List<Widget> colorMenu = [];
     List colorList = [Colors.black,Colors.grey,Colors.brown,
@@ -354,8 +382,22 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
     ];
 
 
+    _changePenColor(color) {
+      setState(() {
+        points = _OffsetList(offsets: [], color: color, strokeWidth: points.strokeWidth);
+        penList.add(points);
+      });
+    }
+
     for(var i = 0; i<colorList.length; i++){
-      colorMenu.add(colorButton(colorList[i]));
+      colorMenu.add(
+          MenuButton(
+            color: colorList[i],
+            onPressed: () => _changePenColor(colorList[i]),
+            canvasColor: canvasColor,
+            active: points.color == colorList[i],
+          )
+      );
       colorMenu.add(SizedBox(width: buttonPadding));
     }
     return Row(
@@ -364,40 +406,9 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget colorButton(color){
-    _changePenColor(color) {
-      setState(() {
-        points = _OffsetList(offsets: [], color: color, strokeWidth: points.strokeWidth);
-        penList.add(points);
-      });
-    }
-
-    return Container(
-            height: buttonSize,
-            width: buttonSize,
-            decoration: BoxDecoration(
-                border: Border.all(
-                  width: points.color == color? 3: 1,
-                  color: canvasColor == Colors.black? Colors.white : Colors.black
-                ),
-                borderRadius: BorderRadius.all(Radius.circular(buttonBorder))
-            ),
-            child: FittedBox(
-                child:FloatingActionButton(
-                    backgroundColor: color,
-                    onPressed: (){
-                      _changePenColor(color);
-                    }
-                )
-            )
-    );
-
-  }
-
   Widget penWidthMenu(screenSize){
     List<Widget> penWidthMenu = [];
     List widthList = [];
-
 
 
     setWidth(){
@@ -409,37 +420,6 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
       widthList = widthList.reversed.toList();
     }
 
-    eraserOnOff(){
-      setState(() {
-        eraserActive? eraserActive = false : eraserActive = true;
-      });
-    }
-
-    createMenu(){
-      for(var i = 0; i<widthList.length; i++){
-        penWidthMenu.add(penWidthButton(widthList[i]));
-        penWidthMenu.add(SizedBox(width: buttonPadding));
-      }
-      penWidthMenu.add(
-          actionButton(
-              Icon(eraserActive?Icons.brush: OwnIcons.eraser),
-                  () => eraserOnOff()
-          )
-      );
-    }
-
-
-    setWidth();
-
-    createMenu();
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: penWidthMenu,
-    );
-  }
-
-  Widget penWidthButton(width){
     _changePenWidth(width){
       setState(() {
         points = _OffsetList(offsets: [], color: points.color, strokeWidth: width);
@@ -447,29 +427,36 @@ class _CanvasPageState extends State<CanvasPage> with TickerProviderStateMixin {
       });
     }
 
-    return Container(
-            height: buttonSize,
-            width: buttonSize,
-            decoration: BoxDecoration(
-                border: Border.all(
-                  width: points.strokeWidth == width? 3: 1,
-                  color: canvasColor == Colors.black? Colors.white : Colors.black
-                ),
-                borderRadius: BorderRadius.all(Radius.circular(buttonBorder))
-            ),
-            child: FittedBox(
-                child:FloatingActionButton(
-                  onPressed: (){
-                    _changePenWidth(width);
-                  },
-                  child: Icon(Icons.circle, size: width)
-                )
-              )
+    createMenu(){
+      for(var i = 0; i<widthList.length; i++){
+        penWidthMenu.add(
+            MenuButton(
+                icon:Icon(Icons.circle, size: widthList[i] /1.5),
+                onPressed: () => _changePenWidth(widthList[i]),
+                canvasColor: canvasColor,
+                active: points.strokeWidth == widthList[i],
+            )
+        );
+        penWidthMenu.add(
+            SizedBox(
+                width: buttonPadding)
+        );
+      }
+    }
+
+    setWidth();
+
+    createMenu();
+
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: penWidthMenu,
     );
+
   }
+
 }
-
-
 
 class _OffsetList {
   List<Offset> offsets;
@@ -478,6 +465,41 @@ class _OffsetList {
 
   _OffsetList(
       {required this.offsets, required this.color, required this.strokeWidth});
+}
+
+class MenuButton extends StatelessWidget{
+  MenuButton({this.icon, this.color, this.onPressed, this.canvasColor, this.active=false});
+
+  var icon;
+  var onPressed;
+  var canvasColor;
+  var color;
+  var active;
+  double buttonSize = 50;
+  double buttonBorder = 25;
+
+
+  Widget build(BuildContext context) {
+    return Container(
+        height: buttonSize,
+        width: buttonSize,
+        decoration: BoxDecoration(
+            border: Border.all(
+                width: active? 3: 1,
+                color: canvasColor == Colors.black? Colors.white : Colors.black
+            ),
+            borderRadius: BorderRadius.all(Radius.circular(buttonBorder))
+        ),
+        child: FittedBox(
+            child: FloatingActionButton(
+                mini: true,
+                backgroundColor: color,
+                child: icon,
+                onPressed: onPressed
+            )
+        )
+    );
+  }
 }
 
 
