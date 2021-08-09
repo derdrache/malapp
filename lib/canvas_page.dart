@@ -25,6 +25,7 @@ class _CanvasPageState extends State<CanvasPage>{
       color: Colors.black,
       strokeWidth: 10.0
   );
+  var undoneOffsets;
   var penList = [];
   Color canvasColor = Colors.white;
   var screenWidth;
@@ -33,6 +34,7 @@ class _CanvasPageState extends State<CanvasPage>{
   void initState(){
     super.initState();
     penList = [points];
+    undoneOffsets = List.generate(1, (i) => List.filled(0, Offset.zero, growable: true), growable: true);
   }
 
 
@@ -50,6 +52,9 @@ class _CanvasPageState extends State<CanvasPage>{
     setState(() {
       mainMenuActive = false;
       newCanvasMenuActive = false;
+
+      List<Offset> bufferPointsList = List.from(points.offsets);
+      undoneOffsets.add(bufferPointsList);
     });
   }
 
@@ -74,6 +79,7 @@ class _CanvasPageState extends State<CanvasPage>{
       if(!eraserActive) {
         penList.last.offsets.add(Offset.zero);
       }
+
     });
 
   }
@@ -174,6 +180,23 @@ class _CanvasPageState extends State<CanvasPage>{
 
   }
 
+  _undoDrawing(){
+    List<Offset> lastDrawing;
+
+    if(!points.offsets.isEmpty){
+      setState(() {
+        if (undoneOffsets.isEmpty){
+          lastDrawing = [];
+        } else{
+          lastDrawing = undoneOffsets.last;
+          undoneOffsets.removeLast();
+        }
+
+        points.offsets = lastDrawing;
+      });
+    }
+  }
+
   eraserOnOff(){
     setState(() {
       eraserActive? eraserActive = false : eraserActive = true;
@@ -224,7 +247,7 @@ class _CanvasPageState extends State<CanvasPage>{
         children: <Widget>[
           MenuButton(
               icon:Icon(Icons.undo),
-              onPressed: () {},
+              onPressed: () => _undoDrawing(),
               canvasColor: canvasColor,
               screenWidth: screenWidth,
               ),

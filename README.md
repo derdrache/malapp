@@ -1,10 +1,9 @@
 # malapp_kinder
 
 to do:
-- Clean code
-
-- Bilder Galarie => Bild aussuchen
 - vor und zurück button einbauen
+- Bilder Galarie => Bild aussuchen
+
 - Menu Ui überarbeiten
 - verschiedene Stifte => pain
 - leinwand farbauswahlMenu verbessern? => openContainer?
