@@ -43,6 +43,7 @@ class _CanvasPageState extends State<CanvasPage>{
       canvasColor = color;
       points.offsets = [];
       penList = [points];
+      undoneOffsets = [];
 
       newCanvasMenuActive = false;
     });
@@ -360,6 +361,7 @@ class _CanvasPageState extends State<CanvasPage>{
       setState(() {
         points = _OffsetList(offsets: [], color: color, strokeWidth: points.strokeWidth);
         penList.add(points);
+        undoneOffsets = [];
       });
     }
 

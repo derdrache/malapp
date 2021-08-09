@@ -1,7 +1,7 @@
 # malapp_kinder
 
 to do:
-- vor und zurück button einbauen
+- undo bug => color switch
 - Bilder Galarie => Bild aussuchen
 
 - Menu Ui überarbeiten
