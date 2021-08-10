@@ -152,8 +152,13 @@ class _CanvasPageState extends State<CanvasPage>{
 
   Future<String> get _windowsPath async {
     final directory = await getApplicationDocumentsDirectory();
+    var newDirectory = Directory(directory.path + "\\malen_kinder");
 
-    return directory.path;
+    if(! await newDirectory.exists()){
+      await newDirectory.create(recursive: true);
+    }
+
+    return newDirectory.path;
   }
 
   Future<File> _combinePathAndFilename(name) async {

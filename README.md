@@ -1,7 +1,7 @@
 # malapp_kinder
 
 to do:
-- undo bug => color switch
+- WIndows: Bilder in einem Ordner speichern
 - Bilder Galarie => Bild aussuchen
 
 - Menu Ui überarbeiten
